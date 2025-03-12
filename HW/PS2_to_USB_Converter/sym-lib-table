@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name "Signetics")(type "KiCad")(uri "${KIPRJMOD}/Signetics.kicad_sym")(options "")(descr ""))
+  (lib (name "Gekkio_Power_Management")(type "KiCad")(uri "${KIPRJMOD}/Gekkio_Power_Management.kicad_sym")(options "")(descr ""))
+)
