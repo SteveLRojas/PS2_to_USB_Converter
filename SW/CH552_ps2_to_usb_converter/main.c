@@ -13,12 +13,13 @@
 #include "usb_hid_keyboard.h"
 
 //Pins:
-// LED2 = P16
-// LED3 = P17
+// LED0 = P11
+// KBDAT = P16
+// LED2 = P17
 // RXD = P30
 // TXD = P31
-// PS2_CLK = P32
-// PS2_DATA = P33
+// KBCLK = P32
+// LED1 = P33
 // UDP = P36
 // UDM = P37
 
@@ -79,10 +80,11 @@ int main()
 	UINT8 translated_key;
 	
 	rcc_set_clk_freq(RCC_CLK_FREQ_24M);
-	gpio_set_mode(GPIO_MODE_PP, GPIO_PORT_1, GPIO_PIN_6 | GPIO_PIN_7);
-	gpio_set_mode(GPIO_MODE_PP, GPIO_PORT_3, GPIO_PIN_1);
-	gpio_set_mode(GPIO_MODE_INPUT, GPIO_PORT_3, GPIO_PIN_0);
-	gpio_set_mode(GPIO_MODE_OD, GPIO_PORT_3, GPIO_PIN_2 | GPIO_PIN_3);
+	gpio_set_mode(GPIO_MODE_PP, GPIO_PORT_1, GPIO_PIN_1 | GPIO_PIN_7);	//LED0, LED2
+	gpio_set_mode(GPIO_MODE_OD, GPIO_PORT_1, GPIO_PIN_6);				//KBDAT
+	gpio_set_mode(GPIO_MODE_PP, GPIO_PORT_3, GPIO_PIN_1 | GPIO_PIN_3);	//TXD, LED1
+	gpio_set_mode(GPIO_MODE_INPUT, GPIO_PORT_3, GPIO_PIN_0);			//RXD
+	gpio_set_mode(GPIO_MODE_OD, GPIO_PORT_3, GPIO_PIN_2);				//KBCLK
 	
 	timer_init(TIMER_0, NULL);
 	timer_set_period(TIMER_0, FREQ_SYS / 1000ul);	//period is 1ms
@@ -90,12 +92,14 @@ int main()
 	E_DIS = 0;
 	
 	//Blink LED once
-	gpio_clear_pin(GPIO_PORT_1, GPIO_PIN_6);
+	gpio_clear_pin(GPIO_PORT_1, GPIO_PIN_1 | GPIO_PIN_7);
+	gpio_clear_pin(GPIO_PORT_3, GPIO_PIN_3);
 	timer_long_delay(TIMER_0, 250);
-	gpio_set_pin(GPIO_PORT_1, GPIO_PIN_6);
+	gpio_set_pin(GPIO_PORT_1, GPIO_PIN_1 | GPIO_PIN_7);
+	gpio_set_pin(GPIO_PORT_3, GPIO_PIN_3);
 	timer_long_delay(TIMER_0, 250);
 	
-	ps2h_kb_init(TIMER_2);
+	ps2h_kb_init(TIMER_2);	//HINT: beyond this point the GPIO library cannot be used (some pins directly controlled by the PS/2 host library).
 	for(count = 0; count < PS2H_KB_MAX_NUM_PRESSED; ++count)
 	{
 		pressed_keys_prev[count] = 0;
@@ -180,5 +184,10 @@ int main()
 			ps2h_kb_set_led(0x07 & ((hid_kb_indicators << 1) | ((hid_kb_indicators >> 2) & 0x01)));
 			kb_indicators_prev = hid_kb_indicators;
 		}
+		
+		//Drive LED pins directly
+		T2EX = !(hid_kb_indicators & HID_KB_LED_NUM_LOCK);
+		INT1 = !(hid_kb_indicators & HID_KB_LED_CAPS_LOCK);
+		SCK = !(hid_kb_indicators & HID_KB_LED_SCROLL_LOCK);
 	}
 }
