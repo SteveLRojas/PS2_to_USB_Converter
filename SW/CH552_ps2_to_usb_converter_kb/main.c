@@ -16,8 +16,6 @@
 // LED0 = P11
 // KBDAT = P16
 // LED2 = P17
-// RXD = P30
-// TXD = P31
 // KBCLK = P32
 // LED1 = P33
 // UDP = P36
@@ -104,10 +102,10 @@ int main()
 	{
 		pressed_keys_prev[count] = 0;
 	}
+	kb_status_prev = PS2H_KB_STAT_NO_ERROR;
 	
 	hid_kb_init();
 	kb_indicators_prev = hid_kb_indicators;
-	kb_status_prev = PS2H_KB_STAT_NO_ERROR;
 	
 	while(TRUE)
 	{
