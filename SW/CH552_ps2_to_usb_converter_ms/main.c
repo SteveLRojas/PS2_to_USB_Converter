@@ -87,7 +87,7 @@ int main()
 		hid_mouse_press(ps2h_ms_buttons & 0x07);
 		hid_mouse_release(~ps2h_ms_buttons & 0x07);
 		hid_mouse_move(ps2h_ms_x_rel, -ps2h_ms_y_rel);
-		hid_mouse_scroll(ps2h_ms_z_rel);
+		hid_mouse_scroll(-ps2h_ms_z_rel);
 		ps2h_ms_x_rel = 0;
 		ps2h_ms_y_rel = 0;
 		ps2h_ms_z_rel = 0;
