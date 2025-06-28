@@ -89,6 +89,11 @@ int main()
 	EA = 1;	//enable interupts
 	E_DIS = 0;
 	
+	if(rcc_get_rst_typ() == RCC_RST_TYP_WDOG)
+	{
+		rcc_delay_ms(500);
+	}
+	
 	//Blink LED once
 	gpio_clear_pin(GPIO_PORT_1, GPIO_PIN_1 | GPIO_PIN_7);
 	gpio_clear_pin(GPIO_PORT_3, GPIO_PIN_3);
@@ -106,6 +111,9 @@ int main()
 	
 	hid_kb_init();
 	kb_indicators_prev = hid_kb_indicators;
+	
+	rcc_reload_wdog(0x00);
+	rcc_set_wdog_rst_en(RCC_WDOG_ENABLED);
 	
 	while(TRUE)
 	{
@@ -189,5 +197,7 @@ int main()
 		T2EX = !(hid_kb_indicators & HID_KB_LED_NUM_LOCK);
 		INT1 = !(hid_kb_indicators & HID_KB_LED_CAPS_LOCK);
 		SCK = !(hid_kb_indicators & HID_KB_LED_SCROLL_LOCK);
+		
+		rcc_reload_wdog(0x00);
 	}
 }

@@ -38,6 +38,11 @@ int main()
 	EA = 1;	//enable interupts
 	E_DIS = 0;
 	
+	if(rcc_get_rst_typ() == RCC_RST_TYP_WDOG)
+	{
+		rcc_delay_ms(500);
+	}
+	
 	//Blink LED once
 	gpio_clear_pin(GPIO_PORT_1, GPIO_PIN_1 | GPIO_PIN_7);
 	gpio_clear_pin(GPIO_PORT_3, GPIO_PIN_3);
@@ -52,6 +57,9 @@ int main()
 	scrolling_requested = 0;
 	
 	hid_init();
+	
+	rcc_reload_wdog(0x00);
+	rcc_set_wdog_rst_en(RCC_WDOG_ENABLED);
 	
 	while(TRUE)
 	{
@@ -84,17 +92,29 @@ int main()
 		
 		ms_status_prev = ps2h_ms_status;
 		
-		hid_mouse_press(ps2h_ms_buttons & 0x07);
-		hid_mouse_release(~ps2h_ms_buttons & 0x07);
-		hid_mouse_move(ps2h_ms_x_rel, -ps2h_ms_y_rel);
-		hid_mouse_scroll(-ps2h_ms_z_rel);
-		ps2h_ms_x_rel = 0;
-		ps2h_ms_y_rel = 0;
-		ps2h_ms_z_rel = 0;
+		//Send updates only if the mouse state has changed.
+		//Windows HID driver registers mouse activity for any update, even if nothing changes.
+		if(ps2h_ms_buttons != ms_buttons_prev)
+		{
+			hid_mouse_press(ps2h_ms_buttons & 0x07);
+			hid_mouse_release(~ps2h_ms_buttons & 0x07);
+			ms_buttons_prev = ps2h_ms_buttons;
+		}
+		
+		if(ps2h_ms_x_rel | ps2h_ms_y_rel | ps2h_ms_z_rel)
+		{
+			hid_mouse_move(ps2h_ms_x_rel, -ps2h_ms_y_rel);
+			hid_mouse_scroll(-ps2h_ms_z_rel);
+			ps2h_ms_x_rel = 0;
+			ps2h_ms_y_rel = 0;
+			ps2h_ms_z_rel = 0;
+		}
 		
 		//Drive LED pins directly
 		T2EX = !(ps2h_ms_buttons & PS2H_MS_BTNS_BTN_LEFT);
 		INT1 = !(ps2h_ms_buttons & PS2H_MS_BTNS_BTN_CENTER);
 		SCK = !(ps2h_ms_buttons & PS2H_MS_BTNS_BTN_RIGHT);
+		
+		rcc_reload_wdog(0x00);
 	}
 }
