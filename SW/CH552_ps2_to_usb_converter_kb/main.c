@@ -111,6 +111,7 @@ int main()
 	
 	hid_kb_init();
 	kb_indicators_prev = hid_kb_indicators;
+	timer_start(TIMER_0);
 	
 	rcc_reload_wdog(0x00);
 	rcc_set_wdog_rst_en(RCC_WDOG_ENABLED);
@@ -197,6 +198,12 @@ int main()
 		T2EX = !(hid_kb_indicators & HID_KB_LED_NUM_LOCK);
 		INT1 = !(hid_kb_indicators & HID_KB_LED_CAPS_LOCK);
 		SCK = !(hid_kb_indicators & HID_KB_LED_SCROLL_LOCK);
+		
+		if(hid_kb_idle_rate && ((UINT8)(timer_overflow_counts[TIMER_0] >> 2) >= hid_kb_idle_rate))
+		{
+			hid_kb_send_report();
+			timer_overflow_counts[TIMER_0] = 0;
+		}
 		
 		rcc_reload_wdog(0x00);
 	}

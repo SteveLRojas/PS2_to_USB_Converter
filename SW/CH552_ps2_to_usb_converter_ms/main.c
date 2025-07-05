@@ -57,6 +57,7 @@ int main()
 	scrolling_requested = 0;
 	
 	hid_init();
+	timer_start(TIMER_0);
 	
 	rcc_reload_wdog(0x00);
 	rcc_set_wdog_rst_en(RCC_WDOG_ENABLED);
@@ -114,6 +115,12 @@ int main()
 		T2EX = !(ps2h_ms_buttons & PS2H_MS_BTNS_BTN_LEFT);
 		INT1 = !(ps2h_ms_buttons & PS2H_MS_BTNS_BTN_CENTER);
 		SCK = !(ps2h_ms_buttons & PS2H_MS_BTNS_BTN_RIGHT);
+		
+		if(hid_idle_rate && ((UINT8)(timer_overflow_counts[TIMER_0] >> 2) >= hid_idle_rate))
+		{
+			hid_mouse_send_report();
+			timer_overflow_counts[TIMER_0] = 0;
+		}
 		
 		rcc_reload_wdog(0x00);
 	}
